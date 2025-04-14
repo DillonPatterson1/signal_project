@@ -25,13 +25,54 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+/**
+ * The main class responsible for simulating health data for multiple patients.
+ * 
+ * <p>This class serves as the entry point for the health data simulation system.
+ * It manages the generation of various types of health data (ECG, blood pressure,
+ * blood saturation, blood levels, and alerts) for multiple patients simultaneously.
+ * The simulation can be configured through command-line arguments to specify the
+ * number of patients and the output strategy.</p>
+ *
+ * <p>Key features:
+ * <ul>
+ *   <li>Configurable number of patients</li>
+ *   <li>Multiple output strategies (console, file, WebSocket, TCP)</li>
+ *   <li>Real-time data generation with configurable intervals</li>
+ *   <li>Thread-safe execution using ScheduledExecutorService</li>
+ * </ul></p>
+ */
 public class HealthDataSimulator {
 
-    private static int patientCount = 50; // Default number of patients
+    /** Default number of patients to simulate data for. */
+    private static int patientCount = 50;
+    
+    /** Executor service for scheduling data generation tasks. */
     private static ScheduledExecutorService scheduler;
-    private static OutputStrategy outputStrategy = new ConsoleOutputStrategy(); // Default output strategy
+    
+    /** Strategy for outputting generated data. */
+    private static OutputStrategy outputStrategy = new ConsoleOutputStrategy();
+    
+    /** Random number generator for task scheduling. */
     private static final Random random = new Random();
 
+    /**
+     * The main entry point for the health data simulation system.
+     * 
+     * <p>This method:
+     * <ol>
+     *   <li>Parses command-line arguments</li>
+     *   <li>Initializes the scheduler</li>
+     *   <li>Creates patient IDs</li>
+     *   <li>Schedules data generation tasks</li>
+     * </ol></p>
+     *
+     * @param args Command-line arguments:
+     *             -h: Show help
+     *             --patient-count <count>: Number of patients (default: 50)
+     *             --output <type>: Output strategy (console, file:<directory>, websocket:<port>, tcp:<port>)
+     * @throws IOException if there are issues with file operations
+     */
     public static void main(String[] args) throws IOException {
 
         parseArguments(args);
@@ -44,6 +85,19 @@ public class HealthDataSimulator {
         scheduleTasksForPatients(patientIds);
     }
 
+    /**
+     * Parses command-line arguments and configures the simulation accordingly.
+     * 
+     * <p>Supported arguments:
+     * <ul>
+     *   <li>-h: Displays help information</li>
+     *   <li>--patient-count: Sets the number of patients</li>
+     *   <li>--output: Configures the output strategy</li>
+     * </ul></p>
+     *
+     * @param args The command-line arguments to parse
+     * @throws IOException if there are issues with file operations
+     */
     private static void parseArguments(String[] args) throws IOException {
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -105,6 +159,9 @@ public class HealthDataSimulator {
         }
     }
 
+    /**
+     * Displays help information about the program's usage and options.
+     */
     private static void printHelp() {
         System.out.println("Usage: java HealthDataSimulator [options]");
         System.out.println("Options:");
@@ -122,6 +179,12 @@ public class HealthDataSimulator {
                 "  This command simulates data for 100 patients and sends the output to WebSocket clients connected to port 8080.");
     }
 
+    /**
+     * Creates a list of patient IDs for the simulation.
+     * 
+     * @param patientCount The number of patients to create IDs for
+     * @return A list of patient IDs from 1 to patientCount
+     */
     private static List<Integer> initializePatientIds(int patientCount) {
         List<Integer> patientIds = new ArrayList<>();
         for (int i = 1; i <= patientCount; i++) {
@@ -130,6 +193,20 @@ public class HealthDataSimulator {
         return patientIds;
     }
 
+    /**
+     * Schedules data generation tasks for all patients.
+     * 
+     * <p>Creates and schedules tasks for:
+     * <ul>
+     *   <li>ECG data (every second)</li>
+     *   <li>Blood saturation (every second)</li>
+     *   <li>Blood pressure (every minute)</li>
+     *   <li>Blood levels (every 2 minutes)</li>
+     *   <li>Alerts (every 20 seconds)</li>
+     * </ul></p>
+     *
+     * @param patientIds The list of patient IDs to schedule tasks for
+     */
     private static void scheduleTasksForPatients(List<Integer> patientIds) {
         ECGDataGenerator ecgDataGenerator = new ECGDataGenerator(patientCount);
         BloodSaturationDataGenerator bloodSaturationDataGenerator = new BloodSaturationDataGenerator(patientCount);
@@ -146,6 +223,16 @@ public class HealthDataSimulator {
         }
     }
 
+    /**
+     * Schedules a task to run at fixed intervals.
+     * 
+     * <p>The task will start after a random delay (0-5 units) and then run
+     * at the specified interval.</p>
+     *
+     * @param task The task to schedule
+     * @param period The interval between task executions
+     * @param timeUnit The time unit for the period
+     */
     private static void scheduleTask(Runnable task, long period, TimeUnit timeUnit) {
         scheduler.scheduleAtFixedRate(task, random.nextInt(5), period, timeUnit);
     }
