@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.alerts.AlertGenerator;
+import java.io.IOException;
 
 /**
  * Manages storage and retrieval of patient data within a healthcare monitoring
@@ -83,29 +84,36 @@ public class DataStorage {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        // DataReader is not defined in this scope, should be initialized appropriately.
-        // DataReader reader = new SomeDataReaderImplementation("path/to/data");
         DataStorage storage = new DataStorage();
+        if (args.length > 0 && args[0].startsWith("dataDir:")) {
+            String dataPath = args[0].substring("dataDir:".length());
+            System.out.println("Attempting to read data from directory: " + dataPath);
+            DataReader reader = new FileDataReader(dataPath);
+            try {
+                reader.readData(storage);
+                System.out.println("Data read successfully from: " + dataPath);
+            } catch (IOException e) {
+                System.err.println("Error reading data from directory " + dataPath + ": " + e.getMessage());
 
-        // Assuming the reader has been properly initialized and can read data into the
-        // storage
-        // reader.readData(storage);
+            }
+        } else {
+            System.out.println("No data directory provided via command line. Starting with empty storage or add data manually.");
 
-        // Example of using DataStorage to retrieve and print records for a patient
-        List<PatientRecord> records = storage.getRecords(1, 1700000000000L, 1800000000000L);
-        for (PatientRecord record : records) {
-            System.out.println("Record for Patient ID: " + record.getPatientId() +
-                    ", Type: " + record.getRecordType() +
-                    ", Data: " + record.getMeasurementValue() +
-                    ", Timestamp: " + record.getTimestamp());
         }
 
-        // Initialize the AlertGenerator with the storage
         AlertGenerator alertGenerator = new AlertGenerator(storage);
-
-        // Evaluate all patients' data to check for conditions that may trigger alerts
-        for (Patient patient : storage.getAllPatients()) {
-            alertGenerator.evaluateData(patient);
+        System.out.println("\nEvaluating patient data for alerts...");
+        List<Patient> patients = storage.getAllPatients();
+        if (patients.isEmpty()) {
+            System.out.println("No patient data in storage to evaluate.");
+        } else {
+            for (Patient patient : patients) {
+                System.out.println("Evaluating data for patient: " + patient.getPatientId());
+                alertGenerator.evaluateData(patient);
+            }
         }
+
+        System.out.println("\nAlert evaluation complete. Triggered alerts (if any) were printed above.");
+
     }
 }

@@ -2,6 +2,7 @@ package com.data_management;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * Represents a patient and manages their medical records.
@@ -52,6 +53,24 @@ public class Patient {
      *         range
      */
     public List<PatientRecord> getRecords(long startTime, long endTime) {
-        // TODO Implement and test this method
+        List<PatientRecord> recordsInRange = new ArrayList<>();
+        for (PatientRecord record : this.patientRecords) {
+            if (record.getTimestamp() >= startTime && record.getTimestamp() <= endTime) {
+                recordsInRange.add(record);
+            }
+        }
+        return recordsInRange;
+    }
+
+    /**
+     * Retrieves all records for this patient.
+     * @return a list of all PatientRecord objects for this patient.
+     */
+    public List<PatientRecord> getAllRecords() {
+        return new ArrayList<>(this.patientRecords);
+    }
+
+    public int getPatientId() {
+        return patientId;
     }
 }
