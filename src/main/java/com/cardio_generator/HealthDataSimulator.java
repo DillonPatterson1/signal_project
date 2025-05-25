@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import com.data_management.DataStorage;
+
 /**
  * The main class responsible for simulating health data for multiple patients.
  * 
@@ -44,11 +46,35 @@ import java.util.ArrayList;
  */
 public class HealthDataSimulator {
 
+    private static HealthDataSimulator instance;
+    private final DataStorage dataStorage;
+    private static ScheduledExecutorService scheduler;
+
+    private HealthDataSimulator() {
+        this.dataStorage = DataStorage.getInstance();
+        this.scheduler = Executors.newScheduledThreadPool(1);
+    }
+
+    public static synchronized HealthDataSimulator getInstance() {
+        if (instance == null) {
+            instance = new HealthDataSimulator();
+        }
+        return instance;
+    }
+
+    public void startSimulation() {
+        scheduler.scheduleAtFixedRate(this::generateData, 0, 1, TimeUnit.SECONDS);
+    }
+
+    public void stopSimulation() {
+        scheduler.shutdown();
+    }
+
+    private void generateData() {
+    }
+
     /** Default number of patients to simulate data for. */
     private static int patientCount = 50;
-    
-    /** Executor service for scheduling data generation tasks. */
-    private static ScheduledExecutorService scheduler;
     
     /** Strategy for outputting generated data. */
     private static OutputStrategy outputStrategy = new ConsoleOutputStrategy();
@@ -74,6 +100,8 @@ public class HealthDataSimulator {
      * @throws IOException if there are issues with file operations
      */
     public static void main(String[] args) throws IOException {
+        HealthDataSimulator simulator = HealthDataSimulator.getInstance();
+        simulator.startSimulation();
 
         parseArguments(args);
 
@@ -130,7 +158,6 @@ public class HealthDataSimulator {
                         } else if (outputArg.startsWith("websocket:")) {
                             try {
                                 int port = Integer.parseInt(outputArg.substring(10));
-                                // Initialize your WebSocket output strategy here
                                 outputStrategy = new WebSocketOutputStrategy(port);
                                 System.out.println("WebSocket output will be on port: " + port);
                             } catch (NumberFormatException e) {
@@ -140,7 +167,6 @@ public class HealthDataSimulator {
                         } else if (outputArg.startsWith("tcp:")) {
                             try {
                                 int port = Integer.parseInt(outputArg.substring(4));
-                                // Initialize your TCP socket output strategy here
                                 outputStrategy = new TcpOutputStrategy(port);
                                 System.out.println("TCP socket output will be on port: " + port);
                             } catch (NumberFormatException e) {

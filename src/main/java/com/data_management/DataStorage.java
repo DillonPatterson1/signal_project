@@ -14,14 +14,18 @@ import java.io.IOException;
  * patient IDs.
  */
 public class DataStorage {
-    private Map<Integer, Patient> patientMap; // Stores patient objects indexed by their unique patient ID.
+    private static DataStorage instance;
+    private Map<Integer, Patient> patients;
 
-    /**
-     * Constructs a new instance of DataStorage, initializing the underlying storage
-     * structure.
-     */
     public DataStorage() {
-        this.patientMap = new HashMap<>();
+        this.patients = new HashMap<>();
+    }
+
+    public static synchronized DataStorage getInstance() {
+        if (instance == null) {
+            instance = new DataStorage();
+        }
+        return instance;
     }
 
     /**
@@ -38,11 +42,7 @@ public class DataStorage {
      *                         milliseconds since the Unix epoch
      */
     public void addPatientData(int patientId, double measurementValue, String recordType, long timestamp) {
-        Patient patient = patientMap.get(patientId);
-        if (patient == null) {
-            patient = new Patient(patientId);
-            patientMap.put(patientId, patient);
-        }
+        Patient patient = patients.computeIfAbsent(patientId, Patient::new);
         patient.addRecord(measurementValue, recordType, timestamp);
     }
 
@@ -60,11 +60,11 @@ public class DataStorage {
      *         range
      */
     public List<PatientRecord> getRecords(int patientId, long startTime, long endTime) {
-        Patient patient = patientMap.get(patientId);
-        if (patient != null) {
-            return patient.getRecords(startTime, endTime);
+        Patient patient = patients.get(patientId);
+        if (patient == null) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>(); // return an empty list if no patient is found
+        return patient.getRecords(startTime, endTime);
     }
 
     /**
@@ -73,7 +73,11 @@ public class DataStorage {
      * @return a list of all patients
      */
     public List<Patient> getAllPatients() {
-        return new ArrayList<>(patientMap.values());
+        return new ArrayList<>(patients.values());
+    }
+
+    public Patient getPatient(int patientId) {
+        return patients.get(patientId);
     }
 
     /**
@@ -84,7 +88,7 @@ public class DataStorage {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        DataStorage storage = new DataStorage();
+        DataStorage storage = DataStorage.getInstance();
         if (args.length > 0 && args[0].startsWith("dataDir:")) {
             String dataPath = args[0].substring("dataDir:".length());
             System.out.println("Attempting to read data from directory: " + dataPath);

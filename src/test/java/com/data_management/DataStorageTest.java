@@ -92,4 +92,28 @@ class DataStorageTest {
         assertTrue(records.stream().anyMatch(r -> r.getMeasurementValue() == 100.0 && r.getTimestamp() == t2));
         assertTrue(records.stream().anyMatch(r -> r.getMeasurementValue() == 110.0 && r.getTimestamp() == t3));
     }
+
+    @Test
+    void testSingletonInstance() {
+        DataStorage instance1 = DataStorage.getInstance();
+        DataStorage instance2 = DataStorage.getInstance();
+        
+        assertNotNull(instance1);
+        assertNotNull(instance2);
+        assertSame(instance1, instance2);
+    }
+
+    @Test
+    void testAddAndRetrievePatientData() {
+        DataStorage storage = DataStorage.getInstance();
+        storage.addPatientData(1, 120.0, "BloodPressureSystolic", 1000L);
+        
+        List<PatientRecord> records = storage.getRecords(1, 0L, 2000L);
+        assertFalse(records.isEmpty());
+        assertEquals(1, records.size());
+        assertEquals(120.0, records.get(0).getMeasurementValue());
+        assertEquals("BloodPressureSystolic", records.get(0).getRecordType());
+        assertEquals(1000L, records.get(0).getTimestamp());
+    }
+
 }
