@@ -18,24 +18,23 @@ class DataStorageTest {
 
     @Test
     void testAddPatientDataAndGetRecords() {
-        // Add data for patient 1
+
         storage.addPatientData(1, 100.0, "HeartRate", 1700000000000L);
         storage.addPatientData(1, 120.0, "HeartRate", 1700000060000L);
-        // Add data for patient 2
+
         storage.addPatientData(2, 98.0, "BloodSaturation", 1700000000000L);
 
-        // Test getRecords for patient 1
         List<PatientRecord> p1Records = storage.getRecords(1, 1700000000000L, 1700000060000L);
         assertEquals(2, p1Records.size());
         assertEquals(100.0, p1Records.get(0).getMeasurementValue());
         assertEquals(120.0, p1Records.get(1).getMeasurementValue()); // Assuming order by add or Patient class sorts them internally
 
-        // Test getRecords for patient 2
+
         List<PatientRecord> p2Records = storage.getRecords(2, 1700000000000L, 1700000000000L);
         assertEquals(1, p2Records.size());
         assertEquals(98.0, p2Records.get(0).getMeasurementValue());
 
-        // Test getRecords for non-existent patient
+
         List<PatientRecord> p3Records = storage.getRecords(3, 0L, Long.MAX_VALUE);
         assertTrue(p3Records.isEmpty());
     }
@@ -57,13 +56,12 @@ class DataStorageTest {
 
     @Test
     void testAddPatientData_NewAndExistingPatient() {
-        // New patient
         storage.addPatientData(10, 75.0, "ECG", System.currentTimeMillis());
         Patient patient10 = storage.getAllPatients().stream().filter(p -> p.getPatientId() == 10).findFirst().orElse(null);
         assertNotNull(patient10);
         assertEquals(1, patient10.getAllRecords().size());
 
-        // Add more data to the same patient
+
         storage.addPatientData(10, 77.0, "ECG", System.currentTimeMillis() + 1000);
         assertEquals(1, storage.getAllPatients().size()); // Patient count should remain 1
         assertEquals(2, patient10.getAllRecords().size(), "Patient 10 should have 2 records now.");

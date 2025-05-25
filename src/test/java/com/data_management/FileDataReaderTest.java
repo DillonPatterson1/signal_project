@@ -22,13 +22,12 @@ class FileDataReaderTest {
     @BeforeEach
     void setUp() {
         dataStorage = new DataStorage();
-        // The FileDataReader will read from the tempDir created by JUnit
         fileDataReader = new FileDataReader(tempDir.toString());
     }
 
     @Test
     void testReadData_ValidFiles() throws IOException {
-        // Create sample data files in the tempDir
+
         Path file1 = tempDir.resolve("HeartRate.txt");
         try (BufferedWriter writer = Files.newBufferedWriter(file1)) {
             writer.write("Patient ID: 1, Timestamp: 1700000000000, Label: HeartRate, Data: 75.0\n");
@@ -53,13 +52,12 @@ class FileDataReaderTest {
 
         Patient patient1 = dataStorage.getAllPatients().stream().filter(p -> p.getPatientId() == 1).findFirst().orElse(null);
         assertNotNull(patient1);
-        // Patient 1: 2 HeartRate, 1 BloodPressure (parsed as 2 records: Systolic, Diastolic)
+
         assertEquals(4, patient1.getAllRecords().size(), "Patient 1 should have 4 records (2 HR, 1 BP_Sys, 1 BP_Dia).");
-        
-        // Check specific record for patient 1 (e.g. a heart rate)
+
         assertTrue(patient1.getAllRecords().stream()
             .anyMatch(r -> r.getRecordType().equals("HeartRate") && r.getMeasurementValue() == 78.0 && r.getTimestamp() == 1700000060000L));
-        // Check BP records for patient 1
+
          assertTrue(patient1.getAllRecords().stream()
             .anyMatch(r -> r.getRecordType().equals("BloodPressureSystolic") && r.getMeasurementValue() == 120.0));
         assertTrue(patient1.getAllRecords().stream()
@@ -67,7 +65,7 @@ class FileDataReaderTest {
 
         Patient patient2 = dataStorage.getAllPatients().stream().filter(p -> p.getPatientId() == 2).findFirst().orElse(null);
         assertNotNull(patient2);
-        // Patient 2: 1 HeartRate, 1 BloodSaturation
+
         assertEquals(2, patient2.getAllRecords().size(), "Patient 2 should have 2 records (1 HR, 1 Saturation).");
         assertTrue(patient2.getAllRecords().stream()
             .anyMatch(r -> r.getRecordType().equals("BloodSaturation") && r.getMeasurementValue() == 95.0));
@@ -89,7 +87,7 @@ class FileDataReaderTest {
         }
 
         fileDataReader.readData(dataStorage);
-        // Should only parse the valid lines
+
         assertEquals(2, dataStorage.getAllPatients().size(), "Should parse valid lines and skip malformed ones.");
         Patient patient1 = dataStorage.getAllPatients().stream().filter(p -> p.getPatientId() == 1).findFirst().orElse(null);
         assertNotNull(patient1);
@@ -103,7 +101,7 @@ class FileDataReaderTest {
     @Test
     void testReadData_EmptyFile() throws IOException {
         Path emptyFile = tempDir.resolve("empty.txt");
-        Files.createFile(emptyFile); // Create an empty file
+        Files.createFile(emptyFile);
 
         fileDataReader.readData(dataStorage);
         assertTrue(dataStorage.getAllPatients().isEmpty(), "DataStorage should be empty if only an empty file is present.");
@@ -121,8 +119,7 @@ class FileDataReaderTest {
         fileDataReader.readData(dataStorage);
         Patient patient3 = dataStorage.getAllPatients().stream().filter(p -> p.getPatientId() == 3).findFirst().orElse(null);
         assertNotNull(patient3, "Patient 3 should exist.");
-        
-        // Only the valid 130/85 should be parsed into two records
+
         assertEquals(2, patient3.getAllRecords().size(), "Patient 3 should have 2 records from the valid BP entry.");
         assertTrue(patient3.getAllRecords().stream()
             .anyMatch(r -> r.getRecordType().equals("BloodPressureSystolic") && r.getMeasurementValue() == 130.0));
